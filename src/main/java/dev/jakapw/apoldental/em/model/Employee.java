@@ -19,7 +19,7 @@ import java.sql.Timestamp;
 public class Employee {
 
     @Id
-    @GeneratedValue
+//    @GeneratedValue
     private Long id;
 
     @Column(nullable = false)

@@ -57,4 +57,12 @@ public class EmployeeDAO {
         }
         employeeRepository.deleteById(id);
 	}
+	
+	public Employee getEmployee(Long id) throws EmployeeNotFoundException {
+		Optional<Employee> savedEmployee = employeeRepository.findById(id);
+        if (savedEmployee.isEmpty()) {
+            throw new EmployeeNotFoundException("Employee was not saved yet");
+        }
+        return savedEmployee.get();
+	}
 }

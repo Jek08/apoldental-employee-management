@@ -1,7 +1,8 @@
 package dev.jakapw.apoldental.em.controller;
 
-import org.apache.logging.log4j.CloseableThreadContext.Instance;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -9,25 +10,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import dev.jakapw.apoldental.em.dao.EmployeeDAO;
 import dev.jakapw.apoldental.em.dto.EmployeeDTO;
-import dev.jakapw.apoldental.em.exception.EmployeeNotFoundException;
 import dev.jakapw.apoldental.em.model.Employee;
 
 import java.io.ByteArrayOutputStream;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 
 @RestController
+@RequestMapping("/api/employee")
 public class EmployeeController {
 
     @Autowired
     private EmployeeDAO employeeDAO;
 
-    @GetMapping("/employee")
-    public ResponseEntity<String> getAllEmployees() throws Throwable {
+    @GetMapping
+    public ResponseEntity<String> getAllEmployees() throws Exception {
     	ObjectMapper objectMapper = new ObjectMapper();
     	ByteArrayOutputStream bodyJson = new ByteArrayOutputStream();
     	
@@ -36,27 +32,34 @@ public class EmployeeController {
     	ResponseEntity<String> response = ResponseEntity.ok(new String(bodyJson.toByteArray()));
         return response;
     }
+    
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeDTO> getEmployeeById(@PathVariable Long id) throws Exception {
+    	ResponseEntity<EmployeeDTO> response = ResponseEntity.ok(EmployeeDTO.getInstance(employeeDAO.getEmployee(id)));
+    	return response;
+    }
+    
 
-    @PostMapping("/employee")
+    @PostMapping
     public ResponseEntity<Long> saveNewEmployee(@RequestBody Employee newEmployee) {
     	Optional<EmployeeDTO> employee = employeeDAO.saveNewEmployee(newEmployee);
     	ResponseEntity<Long> response;
     	if (employee.isPresent()) {
-    		response = ResponseEntity.ok(employee.get().getId());
+    		response = ResponseEntity.status(HttpStatus.CREATED).body(employee.get().getId());
     	} else {
     		response = ResponseEntity.status(400).header("errorMsg", "Failed to save employee").body(null);
     	}
     	return response;
     }
+    
+    @PutMapping("/{id}")
+    public ResponseEntity<EmployeeDTO> updateEmployee(@RequestBody Employee newData, @PathVariable Long id) throws Exception {
+    	Employee updatedEmployee = employeeDAO.saveUpdateEmployee(newData);
+    	return ResponseEntity.ok(EmployeeDTO.getInstance(updatedEmployee));
+    }
 
-//    @PutMapping("/{id}")
-//    public ResponseEntity<EmployeeDTO> updateEmployee(@RequestBody Employee updatedEmployee, @PathVariable Long id) throws EmployeeNotFoundException {
-//    	Employee employee = employeeDAO.saveUpdateEmployee(updatedEmployee);
-//    	return Optional.of(EmployeeDTO.getInstance(employee));
-//    }
-//
-//    @DeleteMapping("/{id}")
-//    public  deleteEmployee(@PathVariable Long id) throws EmployeeNotFoundException {
-//        
-//    }
+    @DeleteMapping("/{id}")
+    public void deleteEmployee(@PathVariable Long id) throws Exception {
+        employeeDAO.deleteEmployee(id);
+    }
 }
